@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { type } from "os";
 
 const Book = mongoose.model(
   "Book",
@@ -10,6 +11,7 @@ const Book = mongoose.model(
       ref: "Author",
       required: true,
     },
+    fileUrl: { type: String },
   })
 );
 

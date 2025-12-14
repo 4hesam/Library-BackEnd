@@ -3,6 +3,7 @@ import {
   GraphQLString,
   GraphQLID,
   GraphQLNonNull,
+  GraphQLList,
 } from "graphql";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -199,6 +200,16 @@ export const RootMutationType = new GraphQLObjectType({
         }
 
         return await Borrow.find({ user: context.user._id });
+      },
+    },
+    searchBooks: {
+      type: new GraphQLList(BookType), 
+      args: {
+        keyword: { type: GraphQLNonNull(GraphQLString) }, 
+      },
+      resolve: async (_, args) => {
+        const regex = new RegExp(args.keyword, "i"); 
+        return await Book.find({ name: { $regex: regex } });
       },
     },
   },

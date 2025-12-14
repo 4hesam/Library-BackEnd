@@ -5,6 +5,8 @@ const bookResolver = {
   author: async (book) => await Author.findById(book.authorId),
   bookById: async (parent, args) => await Book.findById(args.id),
   allBooks: async () => await Book.find(),
+  popularBooks: async () => await Book.find().limit(5),
+  booksPagination: async () => await Book.find().limit(20),
 };
-
+  
 module.exports = bookResolver;

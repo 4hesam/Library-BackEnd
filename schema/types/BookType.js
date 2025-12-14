@@ -12,7 +12,8 @@ const BookType = new GraphQLObjectType({
   fields: () => ({
     id: { type: GraphQLNonNull(GraphQLID) },
     name: { type: GraphQLNonNull(GraphQLString) },
-    inventory: { type: GraphQLNonNull(GraphQLString) },
+    inventory: { type: (GraphQLString) },
+    fileUrl: {type: (GraphQLString)},
     author: {
       type: AuthorType,
       resolve: async (book) => await Author.findById(book.authorId),
