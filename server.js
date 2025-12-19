@@ -18,8 +18,9 @@ app.use(cors({
 
 app.use(
   "/graphql",
-  graphqlHTTP((req) => {
-    const user = authMiddleware(req); 
+  graphqlHTTP(async (req) => {
+    const user = await authMiddleware(req); 
+
     return {
       schema,
       graphiql: true,

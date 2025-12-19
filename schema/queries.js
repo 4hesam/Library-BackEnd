@@ -8,9 +8,13 @@ import {
 } from "graphql";
 
 import Author from "../models/Author.js";
+import User from "../models/User.js";
 import Book from "../models/Book.js";
 import AuthorType from "./types/AuthorType.js";
 import BookType from "./types/BookType.js";
+import UserType from "./types/UserType.js";
+import BorrowType from "./types/BorrowType.js";
+import Borrow from "../models/Borrow.js";
 
 const BooksPaginationType = new GraphQLObjectType({
   name: "BooksPagination", // must be unique in schema
@@ -21,7 +25,7 @@ const BooksPaginationType = new GraphQLObjectType({
   }),
 });
 
-export const RootQueryType = new GraphQLObjectType({
+const RootQueryType = new GraphQLObjectType({
   name: "Query",
   fields: () => ({
     book: {
@@ -56,7 +60,6 @@ export const RootQueryType = new GraphQLObjectType({
         if (search) {
           query.name = { $regex: search, $options: "i" };
         }
-        console.log("Search:", search, "Query:", query);
 
         const books = await Book.find(query)
           .skip((pageOffset - 1) * pageSize)
@@ -75,5 +78,40 @@ export const RootQueryType = new GraphQLObjectType({
       type: new GraphQLList(AuthorType),
       resolve: async () => await Author.find(),
     },
+    me: {
+      type: UserType,
+      resolve: async (_, __, context) => {
+        if (!context.user) {
+          throw new Error("Not authenticated");
+        }
+
+        const user = await User.findById(context.user._id);
+
+        return user;
+      },
+    },
+    userBorrow: {
+      type: new GraphQLList(BorrowType),
+      resolve: async (_, __, context) => {
+        if (!context.user) {
+          throw new Error("User not found");
+        }
+
+        const list = await Borrow.find({ user: context.user._id });
+
+        const response = list.map(async (borrow) => {
+          console.log('time: ', borrow.endTime)
+          return {
+            id: borrow._id,
+            startTime: `${borrow.startTime}`,
+            endTime: `${borrow.endTime}`,
+            book: await Book.findById(borrow.book),
+          };
+        });
+
+        return response;
+      },
+    },
   }),
 });
+export default RootQueryType;

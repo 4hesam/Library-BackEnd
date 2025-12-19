@@ -13,7 +13,7 @@ const Borrow = mongoose.model(
       ref: "Book",
       required: true,
     },
-    starTime: {
+    startTime: {
       type: Date,
       required: true,
     },

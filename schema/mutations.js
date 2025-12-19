@@ -8,7 +8,7 @@ import {
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import { User } from "../models/User.js";
+import User from "../models/User.js";
 import { RegisterResponseType } from "./types/RegisterResponseType.js";
 import { LoginResponseType } from "./types/LoginResponseType.js";
 import BookType from "./types/BookType.js";
@@ -166,16 +166,16 @@ export const RootMutationType = new GraphQLObjectType({
     borrowBook: {
       type: BorrowType,
       args: {
-        bookid: { type: GraphQLID },
-        startTime: { type: GraphQLString },
-        endTime: { type: GraphQLString },
+        bookId: { type: GraphQLNonNull(GraphQLID) },
+        startTime: { type: GraphQLNonNull(GraphQLString) },
+        endTime: { type: GraphQLNonNull(GraphQLString) },
       },
-      async resolve(_, { bookid, startTime, endTime }, context) {
+      async resolve(_, { bookId, startTime, endTime }, context) {
         if (!context.user) {
           throw new Error("User not found");
         }
 
-        const book = await Book.findById(bookid);
+        const book = await Book.findById(bookId);
         if (!book) {
           throw new Error("book not found");
         }
@@ -184,31 +184,32 @@ export const RootMutationType = new GraphQLObjectType({
 
         const borrowing = new Borrow({
           user: context.user._id,
-          book: bookid,
+          book: bookId,
           startTime,
           endTime,
         });
+        book.inventory -= 1;
+        await book.save();
+        await borrowing.save();
 
-        return await borrowing.save();
+        const response = {
+          id: borrowing._id,
+          startTime: borrowing.startTime,
+          endTime: borrowing.endTime,
+          book: book,
+        };
+
+        return response;
       },
     },
-    userBorrow: {
-      type: BorrowType,
-      async resolve(_, args, context) {
-        if (!context.user) {
-          throw new Error("User not found");
-        }
 
-        return await Borrow.find({ user: context.user._id });
-      },
-    },
     searchBooks: {
-      type: new GraphQLList(BookType), 
+      type: new GraphQLList(BookType),
       args: {
-        keyword: { type: GraphQLNonNull(GraphQLString) }, 
+        keyword: { type: GraphQLNonNull(GraphQLString) },
       },
       resolve: async (_, args) => {
-        const regex = new RegExp(args.keyword, "i"); 
+        const regex = new RegExp(args.keyword, "i");
         return await Book.find({ name: { $regex: regex } });
       },
     },
