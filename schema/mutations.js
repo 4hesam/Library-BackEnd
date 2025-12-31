@@ -4,6 +4,7 @@ import {
   GraphQLID,
   GraphQLNonNull,
   GraphQLList,
+  GraphQLInt,
 } from "graphql";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -95,6 +96,8 @@ export const RootMutationType = new GraphQLObjectType({
       args: {
         name: { type: GraphQLNonNull(GraphQLString) },
         authorId: { type: GraphQLNonNull(GraphQLID) },
+        inventory: { type: GraphQLNonNull(GraphQLInt) },
+        fileUrl: { type: GraphQLNonNull(GraphQLString) },
       },
       async resolve(_, args, context) {
         if (context.user?.role !== "admin") {
@@ -104,6 +107,8 @@ export const RootMutationType = new GraphQLObjectType({
         const book = new Book({
           name: args.name,
           authorId: args.authorId,
+          fileUrl: args.fileUrl,
+          inventory: args.inventory,
         });
         return await book.save();
       },
@@ -113,7 +118,7 @@ export const RootMutationType = new GraphQLObjectType({
       args: {
         name: { type: GraphQLNonNull(GraphQLString) },
       },
-      async resolve(_, { args }, context) {
+      async resolve(_, args, context) {
         if (!context.user) {
           throw new Error("User not found");
         }
@@ -202,7 +207,6 @@ export const RootMutationType = new GraphQLObjectType({
         return response;
       },
     },
-
     searchBooks: {
       type: new GraphQLList(BookType),
       args: {

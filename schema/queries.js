@@ -42,6 +42,10 @@ const RootQueryType = new GraphQLObjectType({
       args: { id: { type: GraphQLNonNull(GraphQLID) } },
       resolve: async (parent, args) => await Author.findById(args.id),
     },
+    Users: {
+      type: new GraphQLList(UserType),
+      resolve: async () => await User.find(),
+    },
     popularBooks: {
       type: new GraphQLList(BookType),
       resolve: async () => await Book.find().limit(5),
@@ -100,7 +104,6 @@ const RootQueryType = new GraphQLObjectType({
         const list = await Borrow.find({ user: context.user._id });
 
         const response = list.map(async (borrow) => {
-          console.log('time: ', borrow.endTime)
           return {
             id: borrow._id,
             startTime: `${borrow.startTime}`,
