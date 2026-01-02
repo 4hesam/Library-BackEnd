@@ -24,6 +24,14 @@ const BooksPaginationType = new GraphQLObjectType({
     totalPages: { type: GraphQLInt },
   }),
 });
+const AuthorsPaginationType = new GraphQLObjectType({
+  name: "AuthorsPagination", // must be unique in schema
+  fields: () => ({
+    authors: { type: new GraphQLList(AuthorType) },
+    totalCount: { type: GraphQLInt },
+    totalPages: { type: GraphQLInt },
+  }),
+});
 
 const RootQueryType = new GraphQLObjectType({
   name: "Query",
@@ -73,6 +81,34 @@ const RootQueryType = new GraphQLObjectType({
           books,
           totalCount: booksCount,
           totalPages: Math.ceil(booksCount / pageSize),
+        };
+
+        return response;
+      },
+    },
+    authorsPagination: {
+      type: AuthorsPaginationType,
+      args: {
+        pageOffset: { type: GraphQLNonNull(GraphQLInt) },
+        pageSize: { type: GraphQLNonNull(GraphQLInt) },
+        search: { type: GraphQLString },
+      },
+
+      resolve: async (parent, args) => {
+        const { pageOffset = 0, pageSize = 20, search } = args;
+        const query = {};
+        if (search) {
+          query.name = { $regex: search, $options: "i" };
+        }
+
+        const authors = await Author.find(query)
+          .skip((pageOffset - 1) * pageSize)
+          .limit(pageSize);
+        const authorsCount = await Author.countDocuments(query);
+        const response = {
+          authors,
+          totalCount: authorsCount,
+          totalPages: Math.ceil(authorsCount / pageSize),
         };
 
         return response;
